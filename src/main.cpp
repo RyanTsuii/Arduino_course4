@@ -34,13 +34,14 @@ RTC_DS1307 rtc;
 // 时间和目标时间
 DateTime time, tartime = DateTime(1970, 1, 1, 0, 0, 0);
 
-
+int Mod = 0;
 void setup() {
 
     // 引脚设置
     pinMode(FMD_PIN, OUTPUT);
     pinMode(ECHO, INPUT);
     pinMode(TIRG, OUTPUT);
+
     // 初始化串口
     Serial.begin(9600, SERIAL_8E2);
     // 初始化 SSD1306
@@ -73,12 +74,12 @@ void setup() {
     display.clearDisplay();
     display.drawBitmap(0, 0, gImage_Login, 128, 64, WHITE);
     display.display();
-    // delay(1500);
+    delay(1500);
     // 显示logo
     display.clearDisplay();
     display.drawBitmap(26, 0, gImage_logo, 77, 64, WHITE);
     display.display();
-    // delay(1500);
+    delay(1500);
 
 }
 
@@ -94,7 +95,6 @@ char week[7][12] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 // 设置模式：显示当前时间或者设置时间。
 // 0 为显示当前时间，1 为设置时间， 2 为设置闹钟
-int Mod = 0;
 
 // 设置时间
 void set_adj() {
@@ -122,6 +122,7 @@ void show_time() {
 
 void loop() {
 
+
     time = rtc.now();
 
     show_time();
@@ -130,38 +131,26 @@ void loop() {
     // 到达目标时间时触发 warning
     if(time == tartime) {
         warning();
-        delay(2000);
+        delay(3000);
     }
 
-    delay(50);
+    delay(100);
 
 }
 
 
-
-// 解析串口数据
-void decode() {
-
-    py = Serial.read();
-    pmo = Serial.read();
-    pd = Serial.read();
-    ph = Serial.read();
-    pmi = Serial.read();
-    ps = Serial.read();
-
-}
 
 // 提示设置闹钟成功
 void hint() {
 
     display.clearDisplay();
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.setCursor(10, 10);
     display.println("The clock has been set to");
     display.setTextSize(1);
     display.println(String(tartime.year()) + '-' + String(tartime.month()) + '-' + String(tartime.day()));
     display.print(String(tartime.hour() + ':' + String(time.minute())) + ':' + String(time.second()));
-
+    display.display();
 }
 
 
@@ -172,23 +161,22 @@ void serialEvent() {
     while (Serial.available()) {
         
         // 读取新的字节
-        Mod = Serial.read();
-
-        // 如果模式为设置时间，则继续读取数据
+        Mod = Serial.parseInt();
+        py = Serial.parseInt();
+        pmo = Serial.parseInt();
+        pd = Serial.parseInt();
+        ph = Serial.parseInt();
+        pmi = Serial.parseInt();
+        ps = Serial.parseInt();
+        tartime = DateTime(py, pmo, pd, ph, pmi, ps);
         if(Mod == 1) {
-            decode();
-            rtc.adjust(DateTime(py, pmo, pd, ph, pmi, ps));
-            delay(10);
-            Mod = 0;
-        } else if(Mod == 2) {
-            decode();
-            tartime = DateTime(py, pmo, pd, ph, pmi, ps);
-            delay(10);
+            rtc.adjust(tartime);
+            tartime = DateTime(1970, 1, 1, 0, 0, 0);
+        } else if( Mod == 2) {
             hint();
-            delay(1000);
-            Mod = 0;
-        }
-
+            delay(2000);
+        } 
+        Mod = 0;
         delay(10);
     }
 
