@@ -151,6 +151,7 @@ void hint() {
     display.println(String(tartime.year()) + '-' + String(tartime.month()) + '-' + String(tartime.day()));
     display.print(String(tartime.hour() + ':' + String(time.minute())) + ':' + String(time.second()));
     display.display();
+    
 }
 
 
